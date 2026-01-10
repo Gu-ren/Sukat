@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Container, Theme } from './settings/types';
 import { SukatLanding } from './components/generated/SukatLanding';
 
-let theme: Theme = 'light';
+const theme: Theme = 'light';
 // only use 'centered' container for standalone components, never for full page apps or websites.
-let container: Container = 'none';
+const container: Container = 'none';
 
 function App() {
   function setTheme(theme: Theme) {
@@ -25,10 +26,16 @@ function App() {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center">
         {generatedComponent}
+        <Analytics />
       </div>
     );
   } else {
-    return generatedComponent;
+    return (
+      <>
+        {generatedComponent}
+        <Analytics />
+      </>
+    );
   }
 }
 
