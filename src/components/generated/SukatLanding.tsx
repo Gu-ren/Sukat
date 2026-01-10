@@ -14,22 +14,6 @@ type FormData = {
   contactNumber: string;
   fbLink: string;
 };
-const FAQS = [{
-  question: "Is this fully automated AI?",
-  answer: "Not yet. We start with human-in-the-loop recommendations while the AI learns your market. As more data is collected, automation increases. You're always in control of final pricing decisions."
-}, {
-  question: "Do I need to connect Facebook?",
-  answer: "No. We don't access your Facebook account or booking history. You share only what you're comfortable with—simple calendar screenshots or booking summaries work fine."
-}, {
-  question: "How does the AI learn without booking history?",
-  answer: "We use city-wide demand signals, availability patterns, seasonality, and your actions (accept/reject recommendations) to train the model. Over time, it gets smarter about what works in your specific market."
-}, {
-  question: "Can I override recommendations?",
-  answer: "Always. You have full control. Every recommendation comes with an explanation—you decide whether to accept, modify, or ignore it. Your feedback helps the AI improve."
-}, {
-  question: "Is this safe for small operators?",
-  answer: "Yes. We designed Sukat specifically for small operators (1-50 cars). No complex software, no risky automation. Just smart, explainable recommendations you can trust and control."
-}] as any[];
 
 // --- Animation Variants ---
 
@@ -107,24 +91,63 @@ const GlassCard = ({
 export const SukatLanding = () => {
 
   const [loading, setLoading] = useState(false);
+  
 // 1️⃣ Form data state
-const [formData, setFormData] = useState({
+const [formData, setFormData] = useState<FormData>({
   name: "",
   email: "",
   contactNumber: "",
   fbLink: "",
   city: "",
   carCount: "",
-  listingChannel: ""
+  listingChannel: "",
 });
+type FormErrors = Partial<Record<keyof FormData, string>>; // <--- declare type
+  const [errors, setErrors] = useState<FormErrors>({});  
 
 // 2️⃣ Submitted state for success message
 const [submitted, setSubmitted] = useState(false);
+const validateForm = () => {
+  const newErrors: { [key: string]: string } = {};
 
+  // Name
+  if (!formData.name.trim()) newErrors.name = "Name is required.";
+  else if (formData.name.trim().length < 2) newErrors.name = "Name must be at least 2 characters.";
+
+  // Email
+  if (!formData.email.trim()) newErrors.email = "Email is required.";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+    newErrors.email = "Please enter a valid email address.";
+
+  // Phone
+  if (!formData.contactNumber.trim()) newErrors.contactNumber = "Contact number is required.";
+  else if (!/^(\+63|0)9\d{9}$/.test(formData.contactNumber.replace(/\s/g, "")))
+    newErrors.contactNumber = "Phone number must start with +63 or 09 and contain 10 digits.";
+
+  // City
+  if (!formData.city.trim()) newErrors.city = "City is required.";
+
+  // Number of cars
+  if (!formData.carCount) newErrors.carCount = "Please select the number of cars.";
+
+  // Listing channel
+  if (!formData.listingChannel) newErrors.listingChannel = "Please select your primary listing platform.";
+
+  // Facebook URL (optional)
+  if (formData.fbLink.trim() && !/^(https?:\/\/)?(www\.)?facebook.com\/[a-zA-Z0-9(.?)?]/.test(formData.fbLink))
+    newErrors.fbLink = "Please enter a valid Facebook profile link.";
+
+  setErrors(newErrors);
+
+  return Object.keys(newErrors).length === 0;
+};
 // 3️⃣ handleSubmit function
-const handleSubmit = async (e) => {
-  e.preventDefault(); // prevent page reload
-  setLoading(true); 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!validateForm()) return; // stop submission if invalid
+
+  setLoading(true);
 
   try {
     const response = await fetch("https://sukat.vercel.app/waitlist", {
@@ -136,15 +159,15 @@ const handleSubmit = async (e) => {
     const result = await response.json();
 
     if (result.status === "success") {
-      setSubmitted(true); // show success message
+      setSubmitted(true);
     } else {
       alert("Something went wrong: " + result.message);
     }
   } catch (error) {
     console.error(error);
     alert("Failed to submit. Please try again.");
-  }finally {
-    setLoading(false); // stop loader
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -1063,226 +1086,201 @@ const handleSubmit = async (e) => {
         </section>
 
         {/* Waitlist / Signup Section */}
-        <section id="signup" className="py-16 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <AnimatePresence mode="wait">
-              {!submitted ? <motion.div key="form" initial={{
-              opacity: 0,
-              y: 20
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} exit={{
-              opacity: 0,
-              y: -20
-            }} transition={{
-              duration: 0.5
-            }}>
-                  <GlassCard className="backdrop-blur-xl bg-slate-900/90 border-cyan-500/30">
-                    <div className="text-center mb-8">
-                      <div className="inline-flex items-center gap-2 mb-4">
-                        <motion.div animate={{
-                      rotate: [0, 360]
-                    }} transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}>
-                          <Sparkles className="w-4 h-4 text-cyan-400" />
-                        </motion.div>
-                        <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wide">
-                          Limited Spots
-                        </span>
-                      </div>
-                      <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                      Get Early Access
-                      </h2>
-                      <p className="text-slate-400 text-base">
-                        Early pilots help train the AI and receive priority pricing recommendations.
-                      </p>
-                      <motion.div initial={{
-                    opacity: 0,
-                    y: 10
-                  }} animate={{
-                    opacity: 1,
-                    y: 0
-                  }} transition={{
-                    delay: 0.3
-                  }} className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4" style={{
-                    display: "none"
-                  }}>
-                        
-                       
-                      </motion.div>
-                    </div>
+       {/* Waitlist / Signup Section */}
+<section id="signup" className="py-16 md:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <AnimatePresence mode="wait">
+      {!submitted ? (
+        <motion.div
+          key="form"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+        >
+          <GlassCard className="backdrop-blur-xl bg-slate-900/90 border-cyan-500/30">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                </motion.div>
+                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wide">
+                  Limited Spots
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Get Early Access</h2>
+              <p className="text-slate-400 text-base">
+                Early pilots help train the AI and receive priority pricing recommendations.
+              </p>
+            </div>
 
-                    <motion.form variants={containerVariants} initial="hidden" animate="visible" onSubmit={handleSubmit} className="space-y-5">
-                      <div className="grid md:grid-cols-2 gap-5">
-                        <motion.div variants={itemVariants} className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">Name</label>
-                          <input type="text" required className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl placeholder:text-slate-500 text-sm" placeholder="Juan Dela Cruz" value={formData.name} onChange={e => setFormData({
-                        ...formData,
-                        name: e.target.value
-                      })} />
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">Email</label>
-                          <input type="email" required className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl placeholder:text-slate-500 text-sm" placeholder="juan@email.com" value={formData.email} onChange={e => setFormData({
-                        ...formData,
-                        email: e.target.value
-                      })} />
-                        </motion.div>
-                      </div>
+            <motion.form variants={containerVariants} initial="hidden" animate="visible" onSubmit={handleSubmit} className="space-y-5">
 
-                      <div className="grid md:grid-cols-2 gap-5">
-                        <motion.div variants={itemVariants} className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">Contact Number</label>
-                          <input type="tel" required className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl placeholder:text-slate-500 text-sm" placeholder="+63 912 345 6789" value={formData.contactNumber} onChange={e => setFormData({
-                        ...formData,
-                        contactNumber: e.target.value
-                      })} />
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">Facebook Profile Link</label>
-                          <input type="url" className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl placeholder:text-slate-500 text-sm" placeholder="https://facebook.com/yourprofile" value={formData.fbLink} onChange={e => setFormData({
-                        ...formData,
-                        fbLink: e.target.value
-                      })} />
-                        </motion.div>
-                      </div>
+              {/* Name & Email */}
+              <div className="grid md:grid-cols-2 gap-5">
+                <motion.div variants={itemVariants} className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Name</label>
+                  <input
+                    type="text"
+                    placeholder="Juan Dela Cruz"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                      ${errors.name ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                  />
+                  {errors.name && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.name}</motion.p>}
+                </motion.div>
 
-                      <motion.div variants={itemVariants} className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          City
-                        </label>
-                        <input type="text" required className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl placeholder:text-slate-500 text-sm" placeholder="e.g. Metro Manila, Cebu, Davao" value={formData.city} onChange={e => setFormData({
-                      ...formData,
-                      city: e.target.value
-                    })} />
-                      </motion.div>
+                <motion.div variants={itemVariants} className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Email</label>
+                  <input
+                    type="email"
+                    placeholder="juan@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                      ${errors.email ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                  />
+                  {errors.email && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.email}</motion.p>}
+                </motion.div>
+              </div>
 
-                      <motion.div variants={itemVariants} className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          Number of Cars
-                        </label>
-                        <select required className="w-full px-4 py-3 rounded-lg border border-cyan-500/20 bg-slate-800/50 text-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all backdrop-blur-xl text-sm" value={formData.carCount} onChange={e => setFormData({
-                      ...formData,
-                      carCount: e.target.value
-                    })}>
-                          <option value="">Select range...</option>
-                          <option value="1-5">1-5 cars</option>
-                          <option value="6-15">6-15 cars</option>
-                          <option value="16-30">16-30 cars</option>
-                          <option value="31-50">31-50 cars</option>
-                          <option value="50+">50+ cars</option>
-                        </select>
-                      </motion.div>
+              {/* Contact Number & Facebook */}
+              <div className="grid md:grid-cols-2 gap-5">
+                <motion.div variants={itemVariants} className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Contact Number</label>
+                  <input
+                    type="tel"
+                    placeholder="+63 912 345 6789"
+                    value={formData.contactNumber}
+                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                      ${errors.contactNumber ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                  />
+                  {errors.contactNumber && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.contactNumber}</motion.p>}
+                </motion.div>
 
-                      <motion.div variants={itemVariants} className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          Primary listing platform
-                        </label>
-                        <div className="flex flex-wrap gap-3 mt-2">
-                          {['Facebook', 'Website', 'Other'].map(option => <motion.button key={option} type="button" whileHover={{
-                        scale: 1.05
-                      }} whileTap={{
-                        scale: 0.95
-                      }} onClick={() => setFormData({
-                        ...formData,
-                        listingChannel: option
-                      })} className={`px-6 py-2 rounded-full border text-sm font-medium transition-all ${formData.listingChannel === option ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-950 border-cyan-500' : 'backdrop-blur-xl bg-slate-800/50 text-slate-300 border-cyan-500/30 hover:border-cyan-500/50'}`}>
-                              {option}
-                            </motion.button>)}
-                        </div>
-                      </motion.div>
+                <motion.div variants={itemVariants} className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Facebook Profile Link</label>
+                  <input
+                    type="url"
+                    placeholder="https://facebook.com/yourprofile"
+                    value={formData.fbLink}
+                    onChange={(e) => setFormData({ ...formData, fbLink: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                      ${errors.fbLink ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                  />
+                  {errors.fbLink && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.fbLink}</motion.p>}
+                </motion.div>
+              </div>
 
-                      <motion.button
-  type="submit"
-  variants={itemVariants}
-  whileHover={{ scale: 1.02, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.3)" }}
-  whileTap={{ scale: 0.98 }}
-  className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-950 py-4 rounded-xl text-base font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all mt-6 flex items-center justify-center gap-2"
-  disabled={loading} // prevent multiple clicks
->
-  {loading ? (
-    <svg
-      className="animate-spin h-5 w-5 text-slate-950"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      ></circle>
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-      ></path>
-    </svg>
-  ) : (
-    <>
-      <Zap className="w-4 h-4" />
-      Get Early Access
-    </>
-  )}
-</motion.button>
+              {/* City */}
+              <motion.div variants={itemVariants} className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">City</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Metro Manila, Cebu, Davao"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                    ${errors.city ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                />
+                {errors.city && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.city}</motion.p>}
+              </motion.div>
 
-                      <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-2">
-                        <Sparkles className="w-3 h-3" />
-                        Early pilots help train the AI and receive priority pricing recommendations.
-                      </p>
-                    </motion.form>
-                  </GlassCard>
-                </motion.div> : <motion.div key="success" initial={{
-              opacity: 0,
-              scale: 0.9
-            }} animate={{
-              opacity: 1,
-              scale: 1
-            }} exit={{
-              opacity: 0,
-              scale: 0.9
-            }} transition={{
-              duration: 0.5
-            }}>
-                  <GlassCard className="backdrop-blur-xl bg-slate-900/90 text-center border-cyan-500/30">
-                  
-                    <motion.h2 initial={{
-                  opacity: 0,
-                  y: 20
-                }} animate={{
-                  opacity: 1,
-                  y: 0
-                }} transition={{
-                  delay: 0.4
-                }} className="text-3xl font-bold text-white mb-4">
-                      You're on the list!
-                    </motion.h2>
-                    <motion.p initial={{
-                  opacity: 0,
-                  y: 20
-                }} animate={{
-                  opacity: 1,
-                  y: 0
-                }} transition={{
-                  delay: 0.5
-                }} className="text-slate-400 text-base mb-8">
-                      Thanks, <span className="font-semibold text-cyan-400">{formData.name.split(' ')[0]}</span>!
-                      We'll reach out to you at <strong>{formData.email}</strong> soon to discuss your fleet in{' '}
-                      {formData.city}.
-                    </motion.p>
-                   
-                  </GlassCard>
-                </motion.div>}
-            </AnimatePresence>
-          </div>
-        </section>
+              {/* Number of Cars */}
+              <motion.div variants={itemVariants} className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Number of Cars</label>
+                <select
+                  value={formData.carCount}
+                  onChange={(e) => setFormData({ ...formData, carCount: e.target.value })}
+                  className={`w-full px-4 py-3 rounded-lg border text-white bg-slate-800/50 focus:outline-none focus:ring-2 transition-all backdrop-blur-xl text-sm
+                    ${errors.carCount ? 'border-red-500 focus:ring-red-400' : 'border-cyan-500/20 focus:ring-cyan-500/20 focus:border-cyan-500'}`}
+                >
+                  <option value="">Select range...</option>
+                  <option value="1-5">1-5 cars</option>
+                  <option value="6-15">6-15 cars</option>
+                  <option value="16-30">16-30 cars</option>
+                  <option value="31-50">31-50 cars</option>
+                  <option value="50+">50+ cars</option>
+                </select>
+                {errors.carCount && <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs mt-1">{errors.carCount}</motion.p>}
+              </motion.div>
+
+              {/* Primary Listing Platform */}
+              <motion.div variants={itemVariants} className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Primary listing platform</label>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {['Facebook', 'Website', 'Other'].map((option) => (
+                    <motion.button
+                      key={option}
+                      type="button"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setFormData({ ...formData, listingChannel: option })}
+                      className={`px-6 py-2 rounded-full border text-sm font-medium transition-all ${
+                        formData.listingChannel === option
+                          ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-950 border-cyan-500'
+                          : 'backdrop-blur-xl bg-slate-800/50 text-slate-300 border-cyan-500/30 hover:border-cyan-500/50'
+                      }`}
+                    >
+                      {option}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                variants={itemVariants}
+                whileHover={{ scale: 1.02, boxShadow: "0 20px 40px rgba(6, 182, 212, 0.3)" }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-cyan-500 to-cyan-400 text-slate-950 py-4 rounded-xl text-base font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all mt-6 flex items-center justify-center gap-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <svg className="animate-spin h-5 w-5 text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"></path>
+                  </svg>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    Get Early Access
+                  </>
+                )}
+              </motion.button>
+
+              <p className="text-center text-xs text-slate-400 mt-3 flex items-center justify-center gap-2">
+                <Sparkles className="w-3 h-3" />
+                Early pilots help train the AI and receive priority pricing recommendations.
+              </p>
+            </motion.form>
+          </GlassCard>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="success"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.5 }}
+        >
+          <GlassCard className="backdrop-blur-xl bg-slate-900/90 text-center border-cyan-500/30">
+            <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="text-3xl font-bold text-white mb-4">
+              You're on the list!
+            </motion.h2>
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-slate-400 text-base mb-8">
+              Thanks, <span className="font-semibold text-cyan-400">{formData.name.split(' ')[0]}</span>! We'll reach out to you at <strong>{formData.email}</strong> soon to discuss your fleet in {formData.city}.
+            </motion.p>
+          </GlassCard>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+</section>
+
 
 
         {/* Founder Section */}
