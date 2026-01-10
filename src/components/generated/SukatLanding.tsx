@@ -917,7 +917,7 @@ const handleSubmit = async (e) => {
                   Revenue Calculator
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">How Much Extra Could Your Fleet Earn?</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-cyan-900">How Much Extra Could Your Fleet Earn?</h2>
               <p className="text-base md:text-lg text-slate-600 mb-2 px-4">
                 Small daily price adjustments add up to serious monthly profit
               </p>
